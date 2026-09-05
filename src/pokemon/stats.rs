@@ -5,8 +5,7 @@ use rand::{Rng, distr::{Distribution, Uniform}};
 use serde::{Deserialize, Deserializer, Serialize, de::Error, ser::SerializeMap};
 use strum::{EnumCount, VariantArray};
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, Hash, EnumCount, VariantArray, FromStr)]
-#[from_str(rename_all = "snake_case")]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, Hash, EnumCount, VariantArray)]
 #[serde(rename_all = "snake_case")]
 pub enum Stat
 {
@@ -57,12 +56,11 @@ impl Stats
     where
         D: Deserializer<'de>
     {
-        let stats = HashMap::<String, u32>::deserialize(deserializer)?;
+        let stats = HashMap::<Stat, u32>::deserialize(deserializer)?;
         let mut results = BaseStats::default();
 
-        for (stat_name, value) in stats.into_iter()
+        for (stat, value) in stats.into_iter()
         {
-            let stat = Stat::from_str(&stat_name).map_err(D::Error::custom)?;
             results[stat as usize] = value;
         }
 
