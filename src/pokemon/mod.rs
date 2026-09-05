@@ -1,10 +1,11 @@
-use std::sync::LazyLock;
+use std::{array, iter, sync::LazyLock};
 
+use paste::paste;
 use rand::{Rng, RngExt, distr::{Distribution, StandardUniform}};
 use serde::{Deserialize, Serialize};
-use strum::{EnumCount, VariantArray};
+use strum::{EnumCount, FromRepr, VariantArray};
 
-use crate::pokemon::{gender::{Gender, GenderDistribution}, nature::Nature, stats::{Stat, Stats, StatsDistribution}, types::Type};
+use crate::pokemon::{gender::{Gender, GenderDistribution}, nature::Nature, stats::{BaseStats, Stat, Stats, StatsDistribution}, types::Type};
 
 pub mod types;
 pub mod stats;
@@ -22,6 +23,11 @@ pub struct BasePokemon
     stats: Stats,
     ability: String,
     gender_chances: GenderDistribution,
+    #[serde(deserialize_with = "Stats::deserialize_optional")]
+    ev_yield: Stats,
+    catch_rate: u8,
+    base_friendship: u8,
+    base_experience: u8,
 }
 
 #[derive(Debug)]
@@ -104,11 +110,11 @@ pub struct PokemonBuilder<'a>
 }
 
 static IVS_DIST: LazyLock<StatsDistribution> = LazyLock::new(|| StatsDistribution::new(0..=31));
-static EVS_DIST: LazyLock<StatsDistribution> = LazyLock::new(|| StatsDistribution::new(0..=255));
+static EVS_DIST: LazyLock<StatsDistribution> = LazyLock::new(|| StatsDistribution::new(0..=252));
 static NATURE_DIST: LazyLock<StandardUniform> = LazyLock::new(|| StandardUniform::default());
 
 macro_rules! impl_builder_methods {
-    ($field:ident, $t:ty, $dist:expr) => {
+    ($field:ident, $t:ty, $self:tt => $dist:expr) => {
         paste::paste! {
             pub fn [<with_ $field>](mut self, $field: $t) -> Self
             {
@@ -116,10 +122,10 @@ macro_rules! impl_builder_methods {
                 self
             }
 
-            pub fn [<with_random_ $field>](mut self) -> Self
+            pub fn [<with_random_ $field>](mut $self) -> Self
             {
-                self.$field = BuildState::Random($dist);
-                self
+                $self.$field = BuildState::Random($dist);
+                $self
             }
 
             pub fn [<with_default_ $field>](mut self) -> Self
@@ -160,8 +166,8 @@ impl<'a> PokemonBuilder<'a>
         }
     }
 
-    impl_builder_methods!(evs, Stats, &*EVS_DIST);
-    impl_builder_methods!(ivs, Stats, &*IVS_DIST);
-    impl_builder_methods!(nature, Nature, &*NATURE_DIST);
-    // impl_builder_methods!(gender, Gender, &self.base.gender_chances)
+    impl_builder_methods!(evs, Stats, self => &*EVS_DIST);
+    impl_builder_methods!(ivs, Stats, self => &*IVS_DIST);
+    impl_builder_methods!(nature, Nature, self => &*NATURE_DIST);
+    impl_builder_methods!(gender, Gender, self => &self.base.gender_chances);
 }

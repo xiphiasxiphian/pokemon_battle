@@ -9,7 +9,12 @@ pub mod pokemon;
 fn main() -> eyre::Result<()>
 {
     let manager = PokemonManager::new(Path::new("./assets/pokemon/"))?;
-    let sylveon = manager.spawn("SYLVEON", 50).ok_or_eyre("Failed to get Sylveon")?.build();
+    let sylveon = manager
+        .spawn("SYLVEON", 50)
+        .ok_or_eyre("Failed to get Sylveon")?
+        .with_random_evs()
+        .build();
+
     println!("{:#?}", sylveon);
 
     Ok(())

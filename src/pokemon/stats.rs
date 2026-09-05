@@ -1,10 +1,12 @@
-use std::{array, collections::HashMap, ops::{Bound, RangeBounds}};
+use std::{array, collections::HashMap, ops::{Bound, RangeBounds}, str::FromStr};
 
+use derive_more::FromStr;
 use rand::{Rng, distr::{Distribution, Uniform}};
-use serde::{de::Error, Deserialize, Serialize, ser::SerializeMap};
+use serde::{Deserialize, Deserializer, Serialize, de::Error, ser::SerializeMap};
 use strum::{EnumCount, VariantArray};
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, Hash, EnumCount, VariantArray)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, Hash, EnumCount, VariantArray, FromStr)]
+#[from_str(rename_all = "snake_case")]
 #[serde(rename_all = "snake_case")]
 pub enum Stat
 {
@@ -49,6 +51,24 @@ impl Stats
     pub fn stat(&self, stat: Stat) -> u32
     {
         self.base_stats[stat as usize]
+    }
+
+    pub fn deserialize_optional<'de, D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>
+    {
+        let stats = HashMap::<String, u32>::deserialize(deserializer)?;
+        let mut results = BaseStats::default();
+
+        for (stat_name, value) in stats.into_iter()
+        {
+            let stat = Stat::from_str(&stat_name).map_err(D::Error::custom)?;
+            results[stat as usize] = value;
+        }
+
+        Ok(Self {
+            base_stats: results
+        })
     }
 }
 

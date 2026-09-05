@@ -1,6 +1,8 @@
 use serde::{Deserialize, Deserializer, Serialize, de::Error};
 use strum::EnumCount;
 
+use crate::pokemon::Pokemon;
+
 #[derive(Clone, Copy, Debug, derive_more::Display, PartialEq, Eq, Hash, EnumCount, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum Type
@@ -24,6 +26,8 @@ pub enum Type
     Steel,
     Fairy,
 }
+
+pub type PokemonType = (Type, Option<Type>);
 
 impl Type
 {
@@ -58,7 +62,7 @@ impl Type
         Self::MATCHUPS[self as usize][other as usize]
     }
 
-    pub fn deserialize_typing<'de, D>(deserializer: D) -> Result<(Type, Option<Type>), D::Error>
+    pub fn deserialize_typing<'de, D>(deserializer: D) -> Result<PokemonType, D::Error>
     where
         D: Deserializer<'de>,
     {
@@ -70,6 +74,11 @@ impl Type
             _ => Err(D::Error::custom("typing array must contain exactly 1 or 2 types")),
         }
     }
+
+    pub fn multiplier_against(self, target: PokemonType) -> f64
+    {
+        self.matchup(target.0).multiplier() * target.1.map(|x| self.matchup(x).multiplier()).unwrap_or(1.0)
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -79,4 +88,18 @@ pub enum Matchup
     Half,
     Regular,
     Double,
+}
+
+impl Matchup
+{
+    pub fn multiplier(self) -> f64
+    {
+        match self
+        {
+            Self::None => 0.0,
+            Self::Half => 0.5,
+            Self::Regular => 1.0,
+            Self::Double => 2.0,
+        }
+    }
 }
