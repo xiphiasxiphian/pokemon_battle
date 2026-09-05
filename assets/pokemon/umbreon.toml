@@ -1,0 +1,13 @@
+name = "Umbreon"
+id = "UMBREON"
+types = [ "DARK" ]
+ability = "SYNCHRONIZE"
+gender_chances = [ 87.5, 12.5, 0 ]
+
+[stats]
+health = 95
+attack = 65
+defence = 110
+special_attack = 60
+special_defence = 130
+speed = 65
