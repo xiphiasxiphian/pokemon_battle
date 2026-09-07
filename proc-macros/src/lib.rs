@@ -76,6 +76,7 @@ pub fn make_pokemon_enum(input: TokenStream) -> TokenStream
 
     let expanded = quote! {
         #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize, strum::EnumCount, strum::EnumIter, strum::VariantArray)]
+        #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
         pub enum PokemonNames
         {
             #( #ids, )*
