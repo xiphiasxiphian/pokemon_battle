@@ -1,4 +1,4 @@
-use color_eyre::eyre::{self, OptionExt};
+use color_eyre::eyre::{self};
 use directory::pokemon::manager::{PokemonManager, PokemonNames};
 
 fn main() -> eyre::Result<()>

@@ -1,10 +1,10 @@
-use std::{array, iter, sync::LazyLock};
+use std::sync::LazyLock;
 
 use rand::{Rng, RngExt, distr::{Distribution, StandardUniform}};
 use serde::{Deserialize, Serialize};
-use strum::{EnumCount, FromRepr, VariantArray};
+use strum::{EnumCount, VariantArray};
 
-use crate::pokemon::{gender::{Gender, GenderDistribution}, nature::Nature, stats::{BaseStats, Stat, Stats, StatsDistribution}, types::Type};
+use crate::pokemon::{gender::{Gender, GenderDistribution}, nature::Nature, stats::{Stat, Stats, StatsDistribution}, types::Type};
 
 pub mod types;
 pub mod stats;

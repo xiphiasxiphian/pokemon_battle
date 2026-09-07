@@ -1,7 +1,6 @@
 use serde::{Deserialize, Deserializer, Serialize, de::Error};
 use strum::EnumCount;
 
-use crate::pokemon::Pokemon;
 
 #[derive(Clone, Copy, Debug, derive_more::Display, PartialEq, Eq, Hash, EnumCount, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]

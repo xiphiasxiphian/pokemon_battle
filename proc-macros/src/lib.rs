@@ -1,4 +1,4 @@
-use std::{ffi::OsString, fs, path::PathBuf};
+use std::{fs, path::PathBuf};
 
 use heck::ToPascalCase;
 use jwalk::WalkDir;

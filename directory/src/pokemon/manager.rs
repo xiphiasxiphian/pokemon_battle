@@ -1,7 +1,6 @@
-use std::{collections::{HashMap, hash_map::Entry}, fs::{self}, path::{Path, PathBuf}};
+use std::fs::{self};
 
 use color_eyre::eyre::{self, eyre};
-use jwalk::WalkDir;
 use rayon::prelude::*;
 use strum::{EnumCount, VariantArray};
 
