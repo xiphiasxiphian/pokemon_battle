@@ -1,74 +1,55 @@
-use std::{collections::{HashMap, hash_map::Entry}, fs::{self}, path::Path};
+use std::{collections::{HashMap, hash_map::Entry}, fs::{self}, path::{Path, PathBuf}};
 
 use color_eyre::eyre::{self, eyre};
 use jwalk::WalkDir;
-use rayon::iter::{ParallelBridge, ParallelIterator};
+use rayon::prelude::*;
+use strum::{EnumCount, VariantArray};
 
 use crate::pokemon::{BasePokemon, Pokemon, PokemonBuilder};
+
+const POKEMON_PATH: &'static str = "assets/pokemon";
+proc_macros::make_pokemon_enum!("assets/pokemon");
 
 #[derive(Debug)]
 pub struct PokemonManager
 {
-    pokemon: HashMap<String, BasePokemon>,
+    pokemon: [BasePokemon; PokemonNames::COUNT],
 }
 
 impl PokemonManager
 {
     const FILE_FORMAT: &'static str = "toml";
 
-    pub fn new(path: &'static Path) -> eyre::Result<Self>
+    pub fn new() -> eyre::Result<Self>
     {
-        let results: HashMap<String, BasePokemon> = WalkDir::new(path)
-            .into_iter()
-            .par_bridge()
-            .filter_map(|entry| {
-                let entry = entry.ok()?;
-                let path = entry.path();
+        let data: Vec<BasePokemon> = PokemonNames::VARIANTS
+            .into_par_iter()
+            .map(|name| {
+                let path = name.path();
 
-                if !(path.is_file() && path.extension()? == Self::FILE_FORMAT) { return None }
-                Some(path)
+                let content = fs::read_to_string(path)?;
+                let data: BasePokemon = toml::from_str(&content)?;
+
+                Ok(data)
             })
-            .try_fold(
-                || HashMap::new(),
-                |mut local_map, path| {
-                    let content = fs::read_to_string(&path)?;
-                    let data = toml::from_str::<BasePokemon>(&content)?;
+            .collect::<eyre::Result<Vec<BasePokemon>>>()?;
 
-                    match local_map.entry(data.id.clone())
-                    {
-                        Entry::Occupied(_) => {
-                            return Err(eyre!("Failed to import pokemon at {:?} as ID already exists", path));
-                        }
-                        Entry::Vacant(e) => {
-                            e.insert_entry(data);
-                        }
-                    }
+        let result: [BasePokemon; PokemonNames::COUNT] = data.try_into().map_err(|_| eyre!("Idiot Programmer somehow messed up pokemon counts"))?;
 
-                    Ok(local_map)
-                }
-            )
-            .try_reduce(
-                || HashMap::new(),
-                |mut map1, map2| {
-                    map1.extend(map2);
-                    Ok(map1)
-                }
-            )?;
-
-        Ok(
-            Self { pokemon: results }
-        )
+        Ok(Self {
+            pokemon: result,
+        })
     }
 
-    pub fn spawn_random<'a, 'b>(&'a self, id: &str, level: u32) -> Option<Pokemon<'b>>
+    pub fn spawn_random<'a, 'b>(&'a self, id: PokemonNames, level: u32) -> Pokemon<'b>
     where 'a: 'b
     {
-        self.pokemon.get(id).map(|x| Pokemon::builder(x, level).build())
+        Pokemon::builder(&self.pokemon[id as usize], level).build()
     }
 
-    pub fn spawn<'a, 'b>(&'a self, id: &str, level: u32) -> Option<PokemonBuilder<'b>>
+    pub fn spawn<'a, 'b>(&'a self, id: PokemonNames, level: u32) -> PokemonBuilder<'b>
     where 'a: 'b
     {
-        self.pokemon.get(id).map(|x| Pokemon::builder(x, level))
+        Pokemon::builder(&self.pokemon[id as usize], level)
     }
 }

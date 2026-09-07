@@ -5,3 +5,4 @@ members = [
     "sim",
     "proc-macros"
 ]
+default-members = ["sim"]

@@ -187,6 +187,7 @@ dependencies = [
  "derive_more",
  "jwalk",
  "paste",
+ "proc-macros",
  "rand",
  "rayon",
  "serde",
@@ -345,6 +346,16 @@ dependencies = [
 [[package]]
 name = "proc-macros"
 version = "0.1.0"
+dependencies = [
+ "heck",
+ "jwalk",
+ "proc-macro2",
+ "quote",
+ "rayon",
+ "serde",
+ "syn 3.0.5",
+ "toml",
+]
 
 [[package]]
 name = "quote"

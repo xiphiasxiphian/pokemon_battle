@@ -1,6 +1,5 @@
 use std::{array, iter, sync::LazyLock};
 
-use paste::paste;
 use rand::{Rng, RngExt, distr::{Distribution, StandardUniform}};
 use serde::{Deserialize, Serialize};
 use strum::{EnumCount, FromRepr, VariantArray};
