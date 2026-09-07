@@ -1,0 +1,19 @@
+name = "Sylveon"
+id = "SYLVEON"
+types = [ "FAIRY" ]
+ability = "CUTE_CHARM"
+gender_chances = [ 87.5, 12.5, 0 ]
+catch_rate = 45
+base_friendship = 50
+base_experience = 184
+
+[stats]
+health = 95
+attack = 65
+defence = 65
+special_attack = 110
+special_defence = 130
+speed = 60
+
+[ev_yield]
+special_defence = 2

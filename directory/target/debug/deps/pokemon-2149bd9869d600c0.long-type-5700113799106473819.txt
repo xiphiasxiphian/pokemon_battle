@@ -1,0 +1,1 @@
+TryFold<rayon::iter::FilterMap<IterBridge<DirEntryIter<((), ())>>, {closure@src/pokemon/manager.rs:24:25: 24:32}>, ErrReport, {closure@src/pokemon/manager.rs:32:17: 32:19}, {closure@src/pokemon/manager.rs:33:17: 33:38}>
