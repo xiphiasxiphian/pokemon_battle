@@ -4,9 +4,7 @@ use directory::pokemon::manager::{PokemonManager, PokemonNames};
 fn main() -> eyre::Result<()>
 {
     let manager = PokemonManager::new()?;
-    let sylveon = manager
-        .spawn(PokemonNames::Sylveon, 50)
-        .build();
+    let sylveon = manager.spawn(PokemonNames::Sylveon, 50).build();
 
     println!("{:#?}", sylveon);
 

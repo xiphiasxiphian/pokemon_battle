@@ -1,16 +1,24 @@
 use std::sync::LazyLock;
 
-use rand::{Rng, RngExt, distr::{Distribution, StandardUniform}};
+use rand::{
+    Rng, RngExt,
+    distr::{Distribution, StandardUniform},
+};
 use serde::{Deserialize, Serialize};
 use strum::{EnumCount, VariantArray};
 
-use crate::pokemon::{gender::{Gender, GenderDistribution}, nature::Nature, stats::{Stat, Stats, StatsDistribution}, types::Type};
+use crate::pokemon::{
+    gender::{Gender, GenderDistribution},
+    nature::Nature,
+    stats::{Stat, Stats, StatsDistribution},
+    types::Type,
+};
 
-pub mod types;
-pub mod stats;
-pub mod nature;
-pub mod manager;
 pub mod gender;
+pub mod manager;
+pub mod nature;
+pub mod stats;
+pub mod types;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct BasePokemon
@@ -42,18 +50,22 @@ pub struct Pokemon<'a>
 
 impl<'a> Pokemon<'a>
 {
-    pub fn builder(base: &'a BasePokemon, level: u32) -> PokemonBuilder<'a>
-    {
-        PokemonBuilder::new(base, level)
-    }
+    pub fn builder(base: &'a BasePokemon, level: u32) -> PokemonBuilder<'a> { PokemonBuilder::new(base, level) }
 
     pub fn stat(&self, stat: Stat) -> u32
     {
-        let core = <f64>::floor(((2 * self.base.stats.stat(stat) + self.ivs.stat(stat) + (<f64>::floor(self.evs.stat(stat) as f64 / 4.0)) as u32) * self.level) as f64 / 100.0) as u32 + self.level;
+        let core = <f64>::floor(
+            ((2 * self.base.stats.stat(stat)
+                + self.ivs.stat(stat)
+                + (<f64>::floor(self.evs.stat(stat) as f64 / 4.0)) as u32)
+                * self.level) as f64
+                / 100.0,
+        ) as u32
+            + self.level;
         let value = match stat
         {
             Stat::Health => core + 10,
-            s => <f64>::floor((core + 5) as f64 * self.nature.get_modifier(s)) as u32
+            s => <f64>::floor((core + 5) as f64 * self.nature.get_modifier(s)) as u32,
         };
 
         value
@@ -71,7 +83,6 @@ impl<'a> Pokemon<'a>
     }
 }
 
-
 pub enum BuildState<'a, D, T>
 where
     D: Distribution<T>,
@@ -79,7 +90,7 @@ where
 {
     Set(T),
     Random(&'a D),
-    Default
+    Default,
 }
 
 impl<'a, D, T> BuildState<'a, D, T>
@@ -138,7 +149,6 @@ macro_rules! impl_builder_methods {
 
 impl<'a> PokemonBuilder<'a>
 {
-
     pub fn new(base: &'a BasePokemon, level: u32) -> Self
     {
         Self {

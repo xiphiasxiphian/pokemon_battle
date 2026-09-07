@@ -33,21 +33,23 @@ impl PokemonManager
             })
             .collect::<eyre::Result<Vec<BasePokemon>>>()?;
 
-        let result: [BasePokemon; PokemonNames::COUNT] = data.try_into().map_err(|_| eyre!("Idiot Programmer somehow messed up pokemon counts"))?;
+        let result: [BasePokemon; PokemonNames::COUNT] = data
+            .try_into()
+            .map_err(|_| eyre!("Idiot Programmer somehow messed up pokemon counts"))?;
 
-        Ok(Self {
-            pokemon: result,
-        })
+        Ok(Self { pokemon: result })
     }
 
     pub fn spawn_random<'a, 'b>(&'a self, id: PokemonNames, level: u32) -> Pokemon<'b>
-    where 'a: 'b
+    where
+        'a: 'b,
     {
         Pokemon::builder(&self.pokemon[id as usize], level).build()
     }
 
     pub fn spawn<'a, 'b>(&'a self, id: PokemonNames, level: u32) -> PokemonBuilder<'b>
-    where 'a: 'b
+    where
+        'a: 'b,
     {
         Pokemon::builder(&self.pokemon[id as usize], level)
     }

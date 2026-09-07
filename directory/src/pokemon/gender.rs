@@ -1,10 +1,19 @@
 use color_eyre::eyre;
-use rand::{Rng, distr::{Distribution, weighted::WeightedIndex}};
+use rand::{
+    Rng,
+    distr::{Distribution, weighted::WeightedIndex},
+};
 use serde::{Deserialize, Serialize};
 use strum::{EnumCount, FromRepr};
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash, EnumCount, FromRepr)]
-pub enum Gender { Female, Male, #[default] None }
+pub enum Gender
+{
+    Female,
+    Male,
+    #[default]
+    None,
+}
 pub type GenderChances = [f64; Gender::COUNT];
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -12,28 +21,27 @@ pub type GenderChances = [f64; Gender::COUNT];
 pub struct GenderDistribution
 {
     probabilities: GenderChances,
-    weights: WeightedIndex<f64>
+    weights: WeightedIndex<f64>,
 }
 
 impl TryFrom<GenderChances> for GenderDistribution
 {
     type Error = eyre::Report;
 
-    fn try_from(value: GenderChances) -> Result<Self, Self::Error> {
+    fn try_from(value: GenderChances) -> Result<Self, Self::Error>
+    {
         let weights = WeightedIndex::new(value)?;
 
         Ok(Self {
             probabilities: value,
-            weights
+            weights,
         })
     }
 }
 
 impl From<GenderDistribution> for GenderChances
 {
-    fn from(value: GenderDistribution) -> Self {
-        value.probabilities
-    }
+    fn from(value: GenderDistribution) -> Self { value.probabilities }
 }
 
 impl Distribution<Gender> for GenderDistribution
@@ -42,7 +50,6 @@ impl Distribution<Gender> for GenderDistribution
     {
         let index = self.weights.sample(rng);
 
-        Gender::from_repr(index)
-            .expect("Invalid sized weights array, which should be impossible")
+        Gender::from_repr(index).expect("Invalid sized weights array, which should be impossible")
     }
 }

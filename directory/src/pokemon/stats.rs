@@ -1,6 +1,13 @@
-use std::{array, collections::HashMap, ops::{Bound, RangeBounds}};
+use std::{
+    array,
+    collections::HashMap,
+    ops::{Bound, RangeBounds},
+};
 
-use rand::{Rng, distr::{Distribution, Uniform}};
+use rand::{
+    Rng,
+    distr::{Distribution, Uniform},
+};
 use serde::{Deserialize, Deserializer, Serialize, de::Error, ser::SerializeMap};
 use strum::{EnumCount, VariantArray};
 
@@ -26,12 +33,7 @@ pub struct Stats
 
 impl Stats
 {
-    pub fn new(stats: BaseStats) -> Self
-    {
-        Self {
-            base_stats: stats
-        }
-    }
+    pub fn new(stats: BaseStats) -> Self { Self { base_stats: stats } }
 
     pub fn from_iter(stats: impl IntoIterator<Item = (Stat, u32)>) -> Self
     {
@@ -41,19 +43,14 @@ impl Stats
             result[stat as usize] = value;
         }
 
-        Self {
-            base_stats: result
-        }
+        Self { base_stats: result }
     }
 
-    pub fn stat(&self, stat: Stat) -> u32
-    {
-        self.base_stats[stat as usize]
-    }
+    pub fn stat(&self, stat: Stat) -> u32 { self.base_stats[stat as usize] }
 
     pub fn deserialize_optional<'de, D>(deserializer: D) -> Result<Self, D::Error>
     where
-        D: Deserializer<'de>
+        D: Deserializer<'de>,
     {
         let stats = HashMap::<Stat, u32>::deserialize(deserializer)?;
         let mut results = BaseStats::default();
@@ -63,9 +60,7 @@ impl Stats
             results[stat as usize] = value;
         }
 
-        Ok(Self {
-            base_stats: results
-        })
+        Ok(Self { base_stats: results })
     }
 }
 
@@ -73,7 +68,7 @@ impl Serialize for Stats
 {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
-        S: serde::Serializer
+        S: serde::Serializer,
     {
         let mut map = serializer.serialize_map(Some(Stat::VARIANTS.len()))?;
         for &stat in Stat::VARIANTS
@@ -88,7 +83,7 @@ impl<'de> Deserialize<'de> for Stats
 {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
-        D: serde::Deserializer<'de>
+        D: serde::Deserializer<'de>,
     {
         let raw_map = HashMap::<Stat, u32>::deserialize(deserializer)?;
         let mut stats = [0_u32; Stat::COUNT];
@@ -105,33 +100,35 @@ impl<'de> Deserialize<'de> for Stats
             }
         }
 
-        Ok(Stats { base_stats: stats } )
+        Ok(Stats { base_stats: stats })
     }
 }
 
 pub struct StatsDistribution
 {
-    sampler: Uniform<u32>
+    sampler: Uniform<u32>,
 }
 
 impl StatsDistribution
 {
     pub fn new<R: RangeBounds<u32>>(range: R) -> Self
     {
-        let start = match range.start_bound() {
+        let start = match range.start_bound()
+        {
             Bound::Included(&s) => s,
             Bound::Excluded(&s) => s + 1,
             Bound::Unbounded => 0,
         };
 
-        let end = match range.end_bound() {
+        let end = match range.end_bound()
+        {
             Bound::Included(&s) => s,
             Bound::Excluded(&s) => s - 1,
-            Bound::Unbounded => u32::MAX
+            Bound::Unbounded => u32::MAX,
         };
 
         Self {
-            sampler: Uniform::new_inclusive(start, end).expect("Bad range. This should be impossible")
+            sampler: Uniform::new_inclusive(start, end).expect("Bad range. This should be impossible"),
         }
     }
 }
@@ -141,7 +138,7 @@ impl Distribution<Stats> for StatsDistribution
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Stats
     {
         Stats {
-            base_stats: array::from_fn(|_| self.sampler.sample(rng))
+            base_stats: array::from_fn(|_| self.sampler.sample(rng)),
         }
     }
 }
