@@ -75,7 +75,6 @@ impl GrowthRate
                     GrowthRate::Fluctuating if level <= 15 => (l3 * (((level + 1) / 3) + 24)) / 50,
                     GrowthRate::Fluctuating if level <= 36 => (l3 * (level + 14)) / 50,
                     GrowthRate::Fluctuating => (l3 * ((level / 2) + 32)) / 50,
-                    _ => 0,
                 };
 
                 table[rate_index][level as usize] = exp;
