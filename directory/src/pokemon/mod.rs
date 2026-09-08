@@ -7,18 +7,15 @@ use rand::{
 use serde::{Deserialize, Serialize};
 use strum::{EnumCount, VariantArray};
 
-use crate::pokemon::{
+use crate::pokemon::attributes::{
     gender::{Gender, GenderDistribution},
     nature::Nature,
     stats::{Stat, Stats, StatsDistribution},
     types::Type,
 };
 
-pub mod gender;
+pub mod attributes;
 pub mod manager;
-pub mod nature;
-pub mod stats;
-pub mod types;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct BasePokemon
