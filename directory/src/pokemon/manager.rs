@@ -7,7 +7,7 @@ use color_eyre::eyre::{self, eyre};
 use rayon::prelude::*;
 use strum::{EnumCount, VariantArray};
 
-use crate::pokemon::{BasePokemon, Pokemon, PokemonBuilder};
+use crate::pokemon::{BasePokemon, Pokemon, builder::PokemonBuilder};
 
 proc_macros::make_pokemon_enum!("assets/pokemon");
 
@@ -46,17 +46,17 @@ impl PokemonManager
             .map_err(|err| eyre!("Error loading pokemon manager: {}", err))
     }
 
-    pub fn spawn_random<'a, 'b>(&'a self, id: PokemonNames, level: u32) -> Pokemon<'b>
-    where
-        'a: 'b,
-    {
-        Pokemon::builder(&self.pokemon[id as usize], level).build()
-    }
-
     pub fn spawn<'a, 'b>(&'a self, id: PokemonNames, level: u32) -> PokemonBuilder<'b>
     where
         'a: 'b,
     {
-        Pokemon::builder(&self.pokemon[id as usize], level)
+        Pokemon::builder_from_level(&self.pokemon[id as usize], level)
+    }
+
+    pub fn spawn_from_experience<'a, 'b>(&'a self, id: PokemonNames, experience: u32) -> PokemonBuilder<'b>
+    where
+        'a: 'b,
+    {
+        Pokemon::builder(&self.pokemon[id as usize], experience)
     }
 }

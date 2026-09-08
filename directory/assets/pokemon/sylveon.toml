@@ -6,6 +6,7 @@ gender_chances = [ 87.5, 12.5, 0 ]
 catch_rate = 45
 base_friendship = 50
 base_experience = 184
+growth_rate = "MEDIUM_FAST"
 
 [stats]
 health = 95
