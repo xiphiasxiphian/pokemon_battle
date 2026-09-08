@@ -1,15 +1,16 @@
-use std::sync::LazyLock;
+use std::{collections::HashMap, sync::LazyLock};
 
 use rand::{
     Rng, RngExt,
     distr::{Distribution, StandardUniform},
 };
 use serde::{Deserialize, Serialize};
+use smallvec::SmallVec;
 use strum::{EnumCount, VariantArray};
 
-use crate::pokemon::{attributes::{
+use crate::{moves::manager::MoveNames, pokemon::{attributes::{
     gender::{Gender, GenderDistribution}, growth_rate::GrowthRate, nature::Nature, stats::{Stat, Stats, StatsDistribution}, types::Type,
-}, builder::PokemonBuilder};
+}, builder::PokemonBuilder}};
 
 pub mod attributes;
 pub mod manager;
@@ -20,10 +21,12 @@ pub struct BasePokemon
 {
     name: String,
     id: String,
+
     #[serde(deserialize_with = "Type::deserialize_typing")]
     types: (Type, Option<Type>),
     stats: Stats,
     ability: String,
+
     gender_chances: GenderDistribution,
     #[serde(deserialize_with = "Stats::deserialize_optional")]
     ev_yield: Stats,
@@ -31,6 +34,8 @@ pub struct BasePokemon
     base_friendship: u8,
     base_experience: u8,
     growth_rate: GrowthRate,
+
+    learnset: HashMap<u32, SmallVec<[MoveNames; 1]>>
 }
 
 #[derive(Debug)]

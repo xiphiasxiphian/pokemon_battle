@@ -1,4 +1,4 @@
-use std::{fs, path::PathBuf};
+use std::{fs, path::{Path, PathBuf}};
 
 use heck::ToPascalCase;
 use jwalk::WalkDir;
@@ -6,7 +6,7 @@ use proc_macro::TokenStream;
 use proc_macro2::{Ident, Span};
 use quote::quote;
 use rayon::prelude::*;
-use serde::Deserialize;
+use serde::{Deserialize, de::DeserializeOwned};
 use syn::{LitStr, parse_macro_input};
 
 const FILE_FORMAT: &'static str = "toml";
@@ -17,16 +17,70 @@ struct PokemonFile
     id: String, // other fields arent important here
 }
 
+#[derive(Deserialize)]
+struct MoveFile
+{
+    id: String,
+}
+
 #[proc_macro]
 pub fn make_pokemon_enum(input: TokenStream) -> TokenStream
+{
+    make_enum_helper::<_, PokemonFile>(
+        input,
+        syn::Ident::new("PokemonNames", Span::call_site()),
+        |x| x.iter().map(|x| Ident::new(&x.id.to_pascal_case(), Span::call_site())).collect()
+    )
+}
+
+#[proc_macro]
+pub fn make_moves_enum(input: TokenStream) -> TokenStream
+{
+    make_enum_helper::<_, MoveFile>(
+        input,
+        syn::Ident::new("MoveNames", Span::call_site()),
+        |x| x.iter().map(|x| Ident::new(&x.id.to_pascal_case(), Span::call_site())).collect()
+    )}
+
+fn make_enum_helper<F, T: DeserializeOwned + Send + Sync>(input: TokenStream, name: syn::Ident, func: F) -> TokenStream
+where
+    F: FnOnce(Vec<T>) -> Vec<Ident>
 {
     let dir_lit = parse_macro_input!(input as LitStr);
     let relative_path = dir_lit.value();
 
-    let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap_or_else(|_| ".".into());
-    let target_dir = PathBuf::from(manifest_dir).join(&relative_path);
+    let (data, paths) = get_file_info::<T>(Path::new(&relative_path));
+    let ids: Vec<Ident> = func(data);
 
-    let (ids_strings, paths): (Vec<String>, Vec<String>) = WalkDir::new(&target_dir)
+    let expanded = quote! {
+        #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize, strum::EnumCount, strum::EnumIter, strum::VariantArray)]
+        #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+        pub enum #name
+        {
+            #( #ids, )*
+        }
+
+        impl #name
+        {
+            pub fn path(&self) -> &'static ::std::path::Path
+            {
+                match self
+                {
+                    #( Self::#ids => ::std::path::Path::new(#paths), )*
+                }
+            }
+        }
+    };
+
+    expanded.into()
+}
+
+fn get_file_info<T: DeserializeOwned + Send + Sync>(path: &Path) -> (Vec<T>, Vec<String>)
+{
+    let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap_or_else(|_| ".".into());
+    let target_dir = PathBuf::from(manifest_dir).join(path);
+
+    let (data, paths): (Vec<T>, Vec<String>) = WalkDir::new(&target_dir)
         .into_iter()
         .par_bridge()
         .filter_map(|entry| {
@@ -44,12 +98,10 @@ pub fn make_pokemon_enum(input: TokenStream) -> TokenStream
             |(mut names, mut paths), path| {
                 let content = fs::read_to_string(&path)
                     .unwrap_or_else(|err| panic!("Failed to read file at {}: {}", path.display(), err));
-                let config: PokemonFile = toml::from_str(&content)
+                let config: T = toml::from_str(&content)
                     .unwrap_or_else(|err| panic!("Failed to parse file at {}: {}", path.display(), err));
 
-                let ident_str = config.id.to_pascal_case();
-
-                names.push(ident_str);
+                names.push(config);
                 paths.push(
                     path.into_os_string()
                         .into_string()
@@ -68,31 +120,6 @@ pub fn make_pokemon_enum(input: TokenStream) -> TokenStream
             },
         );
 
-    let ids: Vec<Ident> = ids_strings.iter().map(|x| Ident::new(x, Span::call_site())).collect();
-    if ids.is_empty()
-    {
-        panic!("Couldn't find any pokemon config files in {}", target_dir.display())
-    }
-
-    let expanded = quote! {
-        #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize, strum::EnumCount, strum::EnumIter, strum::VariantArray)]
-        #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-        pub enum PokemonNames
-        {
-            #( #ids, )*
-        }
-
-        impl PokemonNames
-        {
-            pub fn path(&self) -> &'static ::std::path::Path
-            {
-                match self
-                {
-                    #( Self::#ids => ::std::path::Path::new(#paths), )*
-                }
-            }
-        }
-    };
-
-    expanded.into()
+    if data.is_empty() { panic!("Failed to find any files") }
+    (data, paths)
 }
