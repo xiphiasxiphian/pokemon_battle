@@ -1,6 +1,8 @@
+use serde::{Deserialize, Serialize};
 use strum::{EnumCount, VariantArray};
 
-#[derive(Clone, Copy, PartialEq, Eq, Hash, strum::EnumCount, strum::VariantArray)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, strum::EnumCount, strum::VariantArray)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum GrowthRate
 {
     Fluctuating,
@@ -15,6 +17,24 @@ impl GrowthRate
 {
     /// using size 101 so the index matches the level exactly. i may regret this decision idk
     pub const EXP_TABLE: [[u32; 101]; GrowthRate::COUNT] = Self::compute_exp_table();
+
+    pub fn level(self, experience: u32) -> u32
+    {
+        let row = Self::EXP_TABLE[self as usize];
+        match row.binary_search(&experience)
+        {
+            Ok(index) => index,
+            Err(index) => index - 1, // this is fine because index cannot be 0, as the first arm of the match would trigger
+        }
+        .try_into()
+        .expect("Somehow got a level outside the range of a u32. This shouldnt be possible")
+    }
+
+    pub fn experience_for_level(self, level: u32) -> u32
+    {
+        Self::EXP_TABLE[self as usize][level as usize]
+    }
+
 
     /// Compute table for experience requirements.
     /// Formulas taken from https://pokestats.gg/growth-rates

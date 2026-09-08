@@ -8,10 +8,7 @@ use serde::{Deserialize, Serialize};
 use strum::{EnumCount, VariantArray};
 
 use crate::pokemon::attributes::{
-    gender::{Gender, GenderDistribution},
-    nature::Nature,
-    stats::{Stat, Stats, StatsDistribution},
-    types::Type,
+    gender::{Gender, GenderDistribution}, growth_rate::GrowthRate, nature::Nature, stats::{Stat, Stats, StatsDistribution}, types::Type,
 };
 
 pub mod attributes;
@@ -32,13 +29,14 @@ pub struct BasePokemon
     catch_rate: u8,
     base_friendship: u8,
     base_experience: u8,
+    growth_rate: GrowthRate,
 }
 
 #[derive(Debug)]
 pub struct Pokemon<'a>
 {
     base: &'a BasePokemon,
-    level: u32,
+    experience: u32,
     evs: Stats,
     ivs: Stats,
     nature: Nature,
@@ -47,18 +45,25 @@ pub struct Pokemon<'a>
 
 impl<'a> Pokemon<'a>
 {
-    pub fn builder(base: &'a BasePokemon, level: u32) -> PokemonBuilder<'a> { PokemonBuilder::new(base, level) }
+    pub fn builder(base: &'a BasePokemon, experience: u32) -> PokemonBuilder<'a> { PokemonBuilder::new(base, experience) }
+
+    pub fn builder_from_level(base: &'a BasePokemon, level: u32) -> PokemonBuilder<'a>
+    {
+        let experience = base.growth_rate.experience_for_level(level);
+        PokemonBuilder::new(base, experience)
+    }
 
     pub fn stat(&self, stat: Stat) -> u32
     {
+        let level = self.base.growth_rate.level(self.experience);
         let core = <f64>::floor(
             ((2 * self.base.stats.stat(stat)
                 + self.ivs.stat(stat)
                 + (<f64>::floor(self.evs.stat(stat) as f64 / 4.0)) as u32)
-                * self.level) as f64
+                * level) as f64
                 / 100.0,
         ) as u32
-            + self.level;
+            + level;
         let value = match stat
         {
             Stat::Health => core + 10,
@@ -109,7 +114,7 @@ where
 pub struct PokemonBuilder<'a>
 {
     base: &'a BasePokemon,
-    level: u32,
+    experience: u32,
     evs: BuildState<'a, StatsDistribution, Stats>,
     ivs: BuildState<'a, StatsDistribution, Stats>,
     nature: BuildState<'a, StandardUniform, Nature>,
@@ -146,11 +151,11 @@ macro_rules! impl_builder_methods {
 
 impl<'a> PokemonBuilder<'a>
 {
-    pub fn new(base: &'a BasePokemon, level: u32) -> Self
+    pub fn new(base: &'a BasePokemon, experience: u32) -> Self
     {
         Self {
             base,
-            level,
+            experience,
             evs: BuildState::Default,
             ivs: BuildState::Random(&*IVS_DIST),
             nature: BuildState::Random(&*NATURE_DIST),
@@ -164,7 +169,7 @@ impl<'a> PokemonBuilder<'a>
 
         Pokemon {
             base: self.base,
-            level: self.level,
+            experience: self.experience,
             evs: self.evs.get(&mut rng),
             ivs: self.ivs.get(&mut rng),
             nature: self.nature.get(&mut rng),
