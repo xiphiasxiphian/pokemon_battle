@@ -1,1 +1,10 @@
+name = "Tackle"
 id = "TACKLE"
+
+move_type = "NORMAL"
+accuracy = 100
+pp = 35
+
+[category]
+type = "PHYSICAL"
+power = 40
