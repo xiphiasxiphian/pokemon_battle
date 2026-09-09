@@ -8,13 +8,25 @@ use serde::{Deserialize, Serialize};
 use smallvec::SmallVec;
 use strum::{EnumCount, VariantArray};
 
-use crate::{moves::manager::MoveNames, pokemon::{attributes::{
-    gender::{Gender, GenderDistribution}, growth_rate::GrowthRate, nature::Nature, stats::{Stat, Stats, StatsDistribution}, types::Type,
-}, builder::PokemonBuilder}};
+use crate::{
+    moves::{Move, MoveList, manager::MoveNames},
+    pokemon::{
+        attributes::{
+            gender::{Gender, GenderDistribution},
+            growth_rate::GrowthRate,
+            nature::Nature,
+            stats::{Stat, Stats, StatsDistribution},
+            types::Type,
+        },
+        builder::PokemonBuilder,
+    },
+};
 
 pub mod attributes;
-pub mod manager;
 pub mod builder;
+pub mod manager;
+
+pub type Learnset = HashMap<u32, SmallVec<[MoveNames; 1]>>;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct BasePokemon
@@ -35,25 +47,31 @@ pub struct BasePokemon
     base_experience: u8,
     growth_rate: GrowthRate,
 
-    learnset: HashMap<u32, SmallVec<[MoveNames; 1]>>
+    learnset: Learnset,
 }
 
 #[derive(Debug)]
-pub struct Pokemon<'a>
+pub struct Pokemon<'p, 'm>
 {
-    base: &'a BasePokemon,
+    base: &'p BasePokemon,
     experience: u32,
     evs: Stats,
     ivs: Stats,
     nature: Nature,
     gender: Gender,
+    moves: MoveList<'m>,
 }
 
-impl<'a> Pokemon<'a>
+impl<'p, 'm> Pokemon<'p, 'm>
+where
+    'p: 'm
 {
-    pub fn builder(base: &'a BasePokemon, experience: u32) -> PokemonBuilder<'a> { PokemonBuilder::new(base, experience) }
+    pub fn builder(base: &'p BasePokemon, experience: u32) -> PokemonBuilder<'p, 'p, 'm>
+    {
+        PokemonBuilder::new(base, experience)
+    }
 
-    pub fn builder_from_level(base: &'a BasePokemon, level: u32) -> PokemonBuilder<'a>
+    pub fn builder_from_level(base: &'p BasePokemon, level: u32) -> PokemonBuilder<'p, 'p, 'm>
     {
         let experience = base.growth_rate.experience_for_level(level);
         PokemonBuilder::new(base, experience)

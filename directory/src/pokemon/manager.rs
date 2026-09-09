@@ -19,7 +19,7 @@ pub struct PokemonManager
 
 impl PokemonManager
 {
-    pub fn get() -> eyre::Result<&'static Self>
+    pub fn get() -> &'static Self
     {
         static INSTANCE: OnceLock<eyre::Result<PokemonManager>> = OnceLock::new();
         INSTANCE
@@ -43,17 +43,17 @@ impl PokemonManager
                 Ok(Self { pokemon: result })
             })
             .as_ref()
-            .map_err(|err| eyre!("Error loading pokemon manager: {}", err))
+            .unwrap_or_else(|err| panic!("Error loading pokemon manager: {}", err))
     }
 
-    pub fn spawn<'a, 'b>(&'a self, id: PokemonNames, level: u32) -> PokemonBuilder<'b>
+    pub fn spawn<'a, 'b>(&'a self, id: PokemonNames, level: u32) -> PokemonBuilder<'a, 'b, 'b>
     where
         'a: 'b,
     {
         Pokemon::builder_from_level(&self.pokemon[id as usize], level)
     }
 
-    pub fn spawn_from_experience<'a, 'b>(&'a self, id: PokemonNames, experience: u32) -> PokemonBuilder<'b>
+    pub fn spawn_from_experience<'a, 'b>(&'a self, id: PokemonNames, experience: u32) -> PokemonBuilder<'a, 'b, 'b>
     where
         'a: 'b,
     {

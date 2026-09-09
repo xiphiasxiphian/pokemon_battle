@@ -15,7 +15,7 @@ pub struct MoveManager
 
 impl MoveManager
 {
-    pub fn get() -> eyre::Result<&'static Self>
+    pub fn get() -> &'static Self
     {
         static INSTANCE: OnceLock<eyre::Result<MoveManager>> = OnceLock::new();
         INSTANCE
@@ -39,6 +39,12 @@ impl MoveManager
                 Ok(Self { moves: result })
             })
             .as_ref()
-            .map_err(|err| eyre!("Error loading move manager: {}", err))
+            .unwrap_or_else(|err| panic!("Failed to init Move Manager: {}", err))
+
+        // panic on failure given that this is a critical init component.
+        // without it, any system that relies on it will fail, and at least one of them
+        // will just have to panic.
     }
+
+    pub fn get_move(&self, id: MoveNames) -> &BaseMove { &self.moves[id as usize] }
 }

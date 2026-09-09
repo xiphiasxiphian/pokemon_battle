@@ -30,11 +30,7 @@ impl GrowthRate
         .expect("Somehow got a level outside the range of a u32. This shouldnt be possible")
     }
 
-    pub fn experience_for_level(self, level: u32) -> u32
-    {
-        Self::EXP_TABLE[self as usize][level as usize]
-    }
-
+    pub fn experience_for_level(self, level: u32) -> u32 { Self::EXP_TABLE[self as usize][level as usize] }
 
     /// Compute table for experience requirements.
     /// Formulas taken from https://pokestats.gg/growth-rates

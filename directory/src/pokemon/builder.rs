@@ -1,8 +1,19 @@
 use std::sync::LazyLock;
 
-use rand::{Rng, distr::{Distribution, StandardUniform}};
+use color_eyre::eyre;
+use rand::{
+    Rng,
+    distr::{Distribution, StandardUniform},
+};
 
-use crate::pokemon::{BasePokemon, Pokemon, attributes::{gender::{Gender, GenderDistribution}, nature::Nature, stats::{Stats, StatsDistribution}}};
+use crate::{moves::{Move, MoveDistribution, MoveList, manager::MoveManager}, pokemon::{
+    BasePokemon, Pokemon,
+    attributes::{
+        gender::{Gender, GenderDistribution},
+        nature::Nature,
+        stats::{Stats, StatsDistribution},
+    },
+}};
 
 pub enum BuildState<'a, D, T>
 where
@@ -30,14 +41,18 @@ where
     }
 }
 
-pub struct PokemonBuilder<'a>
+pub struct PokemonBuilder<'a, 'p, 'm>
+where
+    'p: 'a,
+    'm: 'a,
 {
-    base: &'a BasePokemon,
+    base: &'p BasePokemon,
     experience: u32,
     evs: BuildState<'a, StatsDistribution, Stats>,
     ivs: BuildState<'a, StatsDistribution, Stats>,
     nature: BuildState<'a, StandardUniform, Nature>,
     gender: BuildState<'a, GenderDistribution, Gender>,
+    moves: Option<MoveList<'m>>,
 }
 
 static IVS_DIST: LazyLock<StatsDistribution> = LazyLock::new(|| StatsDistribution::new(0..=31));
@@ -68,9 +83,13 @@ macro_rules! impl_builder_methods {
     };
 }
 
-impl<'a> PokemonBuilder<'a>
+impl<'a, 'p, 'm> PokemonBuilder<'a, 'p, 'm>
+where
+    'p: 'm,
+    'p: 'a,
+    'm: 'a,
 {
-    pub fn new(base: &'a BasePokemon, experience: u32) -> Self
+    pub fn new(base: &'p BasePokemon, experience: u32) -> Self
     {
         Self {
             base,
@@ -79,12 +98,16 @@ impl<'a> PokemonBuilder<'a>
             ivs: BuildState::Random(&*IVS_DIST),
             nature: BuildState::Random(&*NATURE_DIST),
             gender: BuildState::Random(&base.gender_chances),
+            moves: None,
         }
     }
 
-    pub fn build(self) -> Pokemon<'a>
+    pub fn build(self) -> Pokemon<'p, 'm>
     {
         let mut rng = rand::rng();
+        let moves = self.moves.unwrap_or_else(|| {
+            self.random_moves(&mut rng)
+        });
 
         Pokemon {
             base: self.base,
@@ -93,11 +116,27 @@ impl<'a> PokemonBuilder<'a>
             ivs: self.ivs.get(&mut rng),
             nature: self.nature.get(&mut rng),
             gender: self.gender.get(&mut rng),
+            moves,
         }
+    }
+
+    fn random_moves(&self, rng: &mut impl Rng) -> MoveList<'m>
+    {
+        let level = self.base.growth_rate.level(self.experience);
+        let dist = MoveDistribution::new(
+            MoveManager::get(),
+            &self.base.learnset,
+            level,
+        );
+
+        dist.sample(rng)
     }
 
     impl_builder_methods!(evs, Stats, self => &*EVS_DIST);
     impl_builder_methods!(ivs, Stats, self => &*IVS_DIST);
     impl_builder_methods!(nature, Nature, self => &*NATURE_DIST);
     impl_builder_methods!(gender, Gender, self => &self.base.gender_chances);
+
+    pub fn with_random_moves(mut self) { self.moves = None }
+    pub fn with_moves(mut self, moves: MoveList<'m>) { self.moves = Some(moves) }
 }

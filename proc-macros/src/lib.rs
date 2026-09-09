@@ -1,4 +1,7 @@
-use std::{fs, path::{Path, PathBuf}};
+use std::{
+    fs,
+    path::{Path, PathBuf},
+};
 
 use heck::ToPascalCase;
 use jwalk::WalkDir;
@@ -26,25 +29,26 @@ struct MoveFile
 #[proc_macro]
 pub fn make_pokemon_enum(input: TokenStream) -> TokenStream
 {
-    make_enum_helper::<_, PokemonFile>(
-        input,
-        syn::Ident::new("PokemonNames", Span::call_site()),
-        |x| x.iter().map(|x| Ident::new(&x.id.to_pascal_case(), Span::call_site())).collect()
-    )
+    make_enum_helper::<_, PokemonFile>(input, syn::Ident::new("PokemonNames", Span::call_site()), |x| {
+        x.iter()
+            .map(|x| Ident::new(&x.id.to_pascal_case(), Span::call_site()))
+            .collect()
+    })
 }
 
 #[proc_macro]
 pub fn make_moves_enum(input: TokenStream) -> TokenStream
 {
-    make_enum_helper::<_, MoveFile>(
-        input,
-        syn::Ident::new("MoveNames", Span::call_site()),
-        |x| x.iter().map(|x| Ident::new(&x.id.to_pascal_case(), Span::call_site())).collect()
-    )}
+    make_enum_helper::<_, MoveFile>(input, syn::Ident::new("MoveNames", Span::call_site()), |x| {
+        x.iter()
+            .map(|x| Ident::new(&x.id.to_pascal_case(), Span::call_site()))
+            .collect()
+    })
+}
 
 fn make_enum_helper<F, T: DeserializeOwned + Send + Sync>(input: TokenStream, name: syn::Ident, func: F) -> TokenStream
 where
-    F: FnOnce(Vec<T>) -> Vec<Ident>
+    F: FnOnce(Vec<T>) -> Vec<Ident>,
 {
     let dir_lit = parse_macro_input!(input as LitStr);
     let relative_path = dir_lit.value();
@@ -120,6 +124,9 @@ fn get_file_info<T: DeserializeOwned + Send + Sync>(path: &Path) -> (Vec<T>, Vec
             },
         );
 
-    if data.is_empty() { panic!("Failed to find any files") }
+    if data.is_empty()
+    {
+        panic!("Failed to find any files")
+    }
     (data, paths)
 }
