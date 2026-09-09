@@ -1,4 +1,4 @@
-use std::sync::LazyLock;
+use std::{array, sync::LazyLock};
 
 use color_eyre::eyre;
 use rand::{
@@ -139,4 +139,21 @@ where
 
     pub fn with_random_moves(mut self) { self.moves = None }
     pub fn with_moves(mut self, moves: MoveList<'m>) { self.moves = Some(moves) }
+    pub fn with_move(mut self, mov: Move<'m>, index: usize)
+    {
+        match &mut self.moves
+        {
+            Some(x) => {
+                let Some(elem) = x.get_mut(index) else { return; };
+                *elem = Some(mov);
+            },
+            None => {
+                let mut ms = MoveList::default();
+                let Some(elem) = ms.get_mut(index) else { return; };
+                *elem = Some(mov);
+
+                self.moves = Some(ms);
+            }
+        }
+    }
 }
