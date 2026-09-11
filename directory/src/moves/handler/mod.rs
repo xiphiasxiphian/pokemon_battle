@@ -1,4 +1,1 @@
-pub trait MoveHandler
-{
-
-}
+pub trait MoveHandler {}

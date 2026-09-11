@@ -64,7 +64,7 @@ pub struct Pokemon<'p, 'm>
 
 impl<'p, 'm> Pokemon<'p, 'm>
 where
-    'p: 'm
+    'p: 'm,
 {
     pub fn builder(base: &'p BasePokemon, experience: u32) -> PokemonBuilder<'p, 'p, 'm>
     {

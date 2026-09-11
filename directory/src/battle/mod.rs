@@ -1,2 +1,2 @@
-pub mod scheduler;
 pub mod pokemon;
+pub mod scheduler;

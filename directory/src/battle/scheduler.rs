@@ -1,4 +1,1 @@
-pub struct DefaultScheduler
-{
-
-}
+pub struct DefaultScheduler {}

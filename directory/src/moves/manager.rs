@@ -50,7 +50,7 @@ impl MoveManager
 
     pub fn spawn<'a, 'b>(&'a self, id: MoveNames) -> Move<'b>
     where
-        'a: 'b
+        'a: 'b,
     {
         let base = self.get_base(id);
         Move::default_from_base(base)

@@ -1,9 +1,13 @@
 use std::{
-    array, collections::HashMap, fmt::Debug, ops::{Add, Bound, Div, Mul, RangeBounds, Sub},
+    array,
+    collections::HashMap,
+    fmt::Debug,
+    ops::{Add, Bound, Div, Mul, RangeBounds, Sub},
 };
 
 use rand::{
-    Rng, distr::{Distribution, Uniform, uniform::SampleUniform},
+    Rng,
+    distr::{Distribution, Uniform, uniform::SampleUniform},
 };
 use serde::{Deserialize, Deserializer, Serialize, de::Error, ser::SerializeMap};
 use strum::{EnumCount, VariantArray};
@@ -25,14 +29,14 @@ pub type BaseStats<T> = [T; Stat::COUNT];
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct Stats<T = u32>
 where
-    T: Clone + Copy
+    T: Clone + Copy,
 {
     base_stats: BaseStats<T>,
 }
 
 impl<T> Stats<T>
 where
-    T: Default + Clone + Copy
+    T: Default + Clone + Copy,
 {
     pub fn new(stats: BaseStats<T>) -> Self { Self { base_stats: stats } }
 
@@ -54,7 +58,7 @@ where
     pub fn deserialize_optional<'de, D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
-        T: Deserialize<'de>
+        T: Deserialize<'de>,
     {
         let stats = HashMap::<Stat, T>::deserialize(deserializer)?;
         let mut results = BaseStats::default();
@@ -72,7 +76,9 @@ where
         O: Clone + Copy,
         F: Fn(T) -> O,
     {
-        Stats { base_stats: self.base_stats.map(func) }
+        Stats {
+            base_stats: self.base_stats.map(func),
+        }
     }
 }
 

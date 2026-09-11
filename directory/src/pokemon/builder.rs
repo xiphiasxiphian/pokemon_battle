@@ -6,14 +6,17 @@ use rand::{
     distr::{Distribution, StandardUniform},
 };
 
-use crate::{moves::{Move, MoveDistribution, MoveList, manager::MoveManager}, pokemon::{
-    BasePokemon, Pokemon,
-    attributes::{
-        gender::{Gender, GenderDistribution},
-        nature::Nature,
-        stats::{Stats, StatsDistribution},
+use crate::{
+    moves::{Move, MoveDistribution, MoveList, manager::MoveManager},
+    pokemon::{
+        BasePokemon, Pokemon,
+        attributes::{
+            gender::{Gender, GenderDistribution},
+            nature::Nature,
+            stats::{Stats, StatsDistribution},
+        },
     },
-}};
+};
 
 pub enum BuildState<'a, D, T>
 where
@@ -105,9 +108,7 @@ where
     pub fn build(self) -> Pokemon<'p, 'm>
     {
         let mut rng = rand::rng();
-        let moves = self.moves.unwrap_or_else(|| {
-            self.random_moves(&mut rng)
-        });
+        let moves = self.moves.unwrap_or_else(|| self.random_moves(&mut rng));
 
         Pokemon {
             base: self.base,
@@ -123,11 +124,7 @@ where
     fn random_moves(&self, rng: &mut impl Rng) -> MoveList<'m>
     {
         let level = self.base.growth_rate.level(self.experience);
-        let dist = MoveDistribution::new(
-            MoveManager::get(),
-            &self.base.learnset,
-            level,
-        );
+        let dist = MoveDistribution::new(MoveManager::get(), &self.base.learnset, level);
 
         dist.sample(rng)
     }
@@ -143,13 +140,23 @@ where
     {
         match &mut self.moves
         {
-            Some(x) => {
-                let Some(elem) = x.get_mut(index) else { return; };
+            Some(x) =>
+            {
+                let Some(elem) = x.get_mut(index)
+                else
+                {
+                    return;
+                };
                 *elem = Some(mov);
-            },
-            None => {
+            }
+            None =>
+            {
                 let mut ms = MoveList::default();
-                let Some(elem) = ms.get_mut(index) else { return; };
+                let Some(elem) = ms.get_mut(index)
+                else
+                {
+                    return;
+                };
                 *elem = Some(mov);
 
                 self.moves = Some(ms);

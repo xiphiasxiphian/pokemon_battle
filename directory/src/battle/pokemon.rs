@@ -2,7 +2,10 @@ use std::process::id;
 
 use strum::{EnumCount, VariantArray};
 
-use crate::pokemon::{Pokemon, attributes::stats::{Stat, Stats}};
+use crate::pokemon::{
+    Pokemon,
+    attributes::stats::{Stat, Stats},
+};
 
 const STAGE_BOUND: i8 = 6;
 pub type StatStage = i8;
@@ -49,7 +52,7 @@ impl<'a, 'p, 'm> BattlePokemon<'a, 'p, 'm>
 
     pub fn modify_stat_stage<F>(&mut self, stat: Stat, action: F)
     where
-        F: FnOnce(i8) -> i8
+        F: FnOnce(i8) -> i8,
     {
         let new_value = action(self.stat_stages.stat(stat)).clamp(-STAGE_BOUND, STAGE_BOUND);
         self.stat_stages.set_stat(stat, new_value);
@@ -60,10 +63,7 @@ impl<'a, 'p, 'm> BattlePokemon<'a, 'p, 'm>
     // b) their multipliers are treated differently
     // c) they exist only as multipliers
 
-    pub fn accuracy(&self) -> f64
-    {
-        Self::stage_to_multipler(self.accuracy, 3.0)
-    }
+    pub fn accuracy(&self) -> f64 { Self::stage_to_multipler(self.accuracy, 3.0) }
 
     pub fn evasion(&self) -> f64
     {
@@ -91,11 +91,13 @@ impl<'a, 'p, 'm> BattlePokemon<'a, 'p, 'm>
 
     fn status_multiplier(&self) -> Stats<f64>
     {
-        (&self.status).map(|x| match x {
-            Status::Burned => Stats::from_iter([(Stat::Attack, 0.5)]),
-            Status::Paralyzed => Stats::from_iter([(Stat::Speed, 0.5)]),
-            _ => Stats::new([1.0; Stat::COUNT]),
-        })
-        .unwrap_or_else(|| Stats::new([1.0; Stat::COUNT]))
+        (&self.status)
+            .map(|x| match x
+            {
+                Status::Burned => Stats::from_iter([(Stat::Attack, 0.5)]),
+                Status::Paralyzed => Stats::from_iter([(Stat::Speed, 0.5)]),
+                _ => Stats::new([1.0; Stat::COUNT]),
+            })
+            .unwrap_or_else(|| Stats::new([1.0; Stat::COUNT]))
     }
 }

@@ -9,8 +9,8 @@ use crate::{
     pokemon::{Learnset, attributes::types::Type},
 };
 
-pub mod manager;
 pub mod handler;
+pub mod manager;
 
 #[derive(Serialize, Deserialize, Clone, Copy, Debug, Hash)]
 #[serde(tag = "type", rename_all = "SCREAMING_SNAKE_CASE")]
