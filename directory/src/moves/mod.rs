@@ -10,6 +10,7 @@ use crate::{
 };
 
 pub mod manager;
+pub mod handler;
 
 #[derive(Serialize, Deserialize, Clone, Copy, Debug, Hash)]
 #[serde(tag = "type", rename_all = "SCREAMING_SNAKE_CASE")]
@@ -87,7 +88,7 @@ impl<'a> Distribution<MoveList<'a>> for MoveDistribution<'a>
             .learnset
             .iter()
             .filter(|(lvl, _)| *lvl <= &self.level)
-            .flat_map(|(_, m)| m.iter().map(|&x| self.move_manager.get_move(x)))
+            .flat_map(|(_, m)| m.iter().map(|&x| self.move_manager.get_base(x)))
             .collect();
 
         let pool_size = eligible_moves.len();

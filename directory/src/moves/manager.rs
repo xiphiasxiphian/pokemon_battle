@@ -4,7 +4,7 @@ use color_eyre::eyre::{self, eyre};
 use rayon::prelude::*;
 use strum::{EnumCount, VariantArray};
 
-use crate::moves::BaseMove;
+use crate::moves::{BaseMove, Move};
 
 proc_macros::make_moves_enum!("assets/moves");
 
@@ -46,5 +46,13 @@ impl MoveManager
         // will just have to panic.
     }
 
-    pub fn get_move(&self, id: MoveNames) -> &BaseMove { &self.moves[id as usize] }
+    pub fn get_base(&self, id: MoveNames) -> &BaseMove { &self.moves[id as usize] }
+
+    pub fn spawn<'a, 'b>(&'a self, id: MoveNames) -> Move<'b>
+    where
+        'a: 'b
+    {
+        let base = self.get_base(id);
+        Move::default_from_base(base)
+    }
 }

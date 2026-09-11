@@ -1,12 +1,9 @@
 use std::{
-    array,
-    collections::HashMap,
-    ops::{Bound, RangeBounds},
+    array, collections::HashMap, fmt::Debug, ops::{Add, Bound, Div, Mul, RangeBounds, Sub},
 };
 
 use rand::{
-    Rng,
-    distr::{Distribution, Uniform},
+    Rng, distr::{Distribution, Uniform, uniform::SampleUniform},
 };
 use serde::{Deserialize, Deserializer, Serialize, de::Error, ser::SerializeMap};
 use strum::{EnumCount, VariantArray};
@@ -23,19 +20,23 @@ pub enum Stat
     Speed,
 }
 
-pub type BaseStats = [u32; Stat::COUNT];
+pub type BaseStats<T> = [T; Stat::COUNT];
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub struct Stats
+pub struct Stats<T = u32>
+where
+    T: Clone + Copy
 {
-    base_stats: BaseStats,
+    base_stats: BaseStats<T>,
 }
 
-impl Stats
+impl<T> Stats<T>
+where
+    T: Default + Clone + Copy
 {
-    pub fn new(stats: BaseStats) -> Self { Self { base_stats: stats } }
+    pub fn new(stats: BaseStats<T>) -> Self { Self { base_stats: stats } }
 
-    pub fn from_iter(stats: impl IntoIterator<Item = (Stat, u32)>) -> Self
+    pub fn from_iter(stats: impl IntoIterator<Item = (Stat, T)>) -> Self
     {
         let mut result = BaseStats::default();
         for (stat, value) in stats
@@ -46,13 +47,16 @@ impl Stats
         Self { base_stats: result }
     }
 
-    pub fn stat(&self, stat: Stat) -> u32 { self.base_stats[stat as usize] }
+    pub fn stat(&self, stat: Stat) -> T { self.base_stats[stat as usize] }
+
+    pub fn set_stat(&mut self, stat: Stat, value: T) { self.base_stats[stat as usize] = value; }
 
     pub fn deserialize_optional<'de, D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
+        T: Deserialize<'de>
     {
-        let stats = HashMap::<Stat, u32>::deserialize(deserializer)?;
+        let stats = HashMap::<Stat, T>::deserialize(deserializer)?;
         let mut results = BaseStats::default();
 
         for (stat, value) in stats.into_iter()
@@ -61,6 +65,14 @@ impl Stats
         }
 
         Ok(Self { base_stats: results })
+    }
+
+    pub fn map<F, O>(&self, func: F) -> Stats<O>
+    where
+        O: Clone + Copy,
+        F: Fn(T) -> O,
+    {
+        Stats { base_stats: self.base_stats.map(func) }
     }
 }
 
@@ -104,12 +116,52 @@ impl<'de> Deserialize<'de> for Stats
     }
 }
 
-pub struct StatsDistribution
-{
-    sampler: Uniform<u32>,
+macro_rules! impl_math_ops {
+    ($($trait:ident, $method:ident),*) => {
+        $(
+            impl<T> $trait for Stats<T>
+            where
+                T: Copy + $trait<Output = T>,
+            {
+                type Output = Self;
+
+                fn $method(self, rhs: Self) -> <Self as $trait>::Output {
+                    Self {
+                        base_stats: std::array::from_fn(|i| {
+                            self.base_stats[i].$method(rhs.base_stats[i])
+                        }),
+                    }
+                }
+            }
+
+            impl<T> $trait<T> for Stats<T>
+            where
+                T: Copy + $trait<Output = T>,
+            {
+                type Output = Self;
+
+                fn $method(self, scalar: T) -> <Self as $trait>::Output {
+                    Self {
+                        base_stats: std::array::from_fn(|i| {
+                            self.base_stats[i].$method(scalar)
+                        }),
+                    }
+                }
+            }
+        )*
+    };
 }
 
-impl StatsDistribution
+impl_math_ops!(Add, add, Sub, sub, Mul, mul, Div, div);
+
+pub struct StatsDistribution<T = u32>
+where
+    T: SampleUniform,
+{
+    sampler: Uniform<T>,
+}
+
+impl StatsDistribution<u32>
 {
     pub fn new<R: RangeBounds<u32>>(range: R) -> Self
     {
@@ -133,9 +185,11 @@ impl StatsDistribution
     }
 }
 
-impl Distribution<Stats> for StatsDistribution
+impl<T> Distribution<Stats<T>> for StatsDistribution<T>
+where
+    T: Default + Copy + Clone + SampleUniform,
 {
-    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Stats
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Stats<T>
     {
         Stats {
             base_stats: array::from_fn(|_| self.sampler.sample(rng)),
