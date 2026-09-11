@@ -1,6 +1,5 @@
-use std::{array, sync::LazyLock};
+use std::sync::LazyLock;
 
-use color_eyre::eyre;
 use rand::{
     Rng,
     distr::{Distribution, StandardUniform},

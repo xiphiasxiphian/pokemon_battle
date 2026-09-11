@@ -6,7 +6,7 @@ use directory::{
 
 fn main() -> eyre::Result<()>
 {
-    let move_manager = MoveManager::get();
+    let _move_manager = MoveManager::get();
 
     let pokemon_manager = PokemonManager::get();
     let sylveon = pokemon_manager.spawn(PokemonNames::Sylveon, 50).build();

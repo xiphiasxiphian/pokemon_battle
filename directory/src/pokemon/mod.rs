@@ -1,21 +1,18 @@
-use std::{collections::HashMap, sync::LazyLock};
+use std::collections::HashMap;
 
-use rand::{
-    Rng, RngExt,
-    distr::{Distribution, StandardUniform},
-};
+use rand::distr::Distribution;
 use serde::{Deserialize, Serialize};
 use smallvec::SmallVec;
 use strum::{EnumCount, VariantArray};
 
 use crate::{
-    moves::{Move, MoveList, manager::MoveNames},
+    moves::{MoveList, manager::MoveNames},
     pokemon::{
         attributes::{
             gender::{Gender, GenderDistribution},
             growth_rate::GrowthRate,
             nature::Nature,
-            stats::{Stat, Stats, StatsDistribution},
+            stats::{Stat, Stats},
             types::Type,
         },
         builder::PokemonBuilder,

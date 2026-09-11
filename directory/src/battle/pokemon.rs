@@ -1,6 +1,5 @@
-use std::process::id;
 
-use strum::{EnumCount, VariantArray};
+use strum::EnumCount;
 
 use crate::pokemon::{
     Pokemon,
